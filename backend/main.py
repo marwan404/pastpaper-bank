@@ -18,9 +18,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/download")
-async def download_file():
-    file_path = "backend/files/hello.txt"
+@app.get("/")
+def index():
+    file_path = "files/hello.html"
     return FileResponse(file_path)
 
 if __name__ == "__main__":
