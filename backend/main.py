@@ -1,13 +1,27 @@
+import uvicorn
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 app = FastAPI()
 
+origins = [
+    "http://localhost:3000"
+]
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+@app.get("/download")
+async def download_file():
+    file_path = "backend/files/hello.txt"
+    return FileResponse(file_path)
 
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
