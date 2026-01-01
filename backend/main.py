@@ -48,6 +48,12 @@ def add_task(task: Task):
         json_file.truncate()
     return task
 
+app.put("/tasks/{task_name}", response_model=Tasks)
+def update_task(task: Task):
+    with open("tasks.json", "r") as json_file:
+        data = json.load(json_file)
+    return data
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

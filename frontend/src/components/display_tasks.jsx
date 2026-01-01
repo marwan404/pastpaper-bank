@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import CompleteTask from "./complete_task.jsx";
 import api from "../api.js";
 
 function DisplayTasks() {
@@ -15,12 +16,24 @@ function DisplayTasks() {
     };
 
     fetchData();
-  }, []); // run once on mount
+  }, []);
+
+  const handleTaskCompleted = (taskName) => {
+    setTasks(prev =>
+      prev.filter(task => task.name !== taskName)
+    );
+  };
 
   return (
     <ul>
-      {tasks.map((task) => (
-        <li key={task.name}>{task.name}</li>
+      {tasks.map(task => (
+        <li key={task.name}>
+          {task.name}
+          <CompleteTask
+            name={task.name}
+            onTaskCompleted={handleTaskCompleted}
+          />
+        </li>
       ))}
     </ul>
   );

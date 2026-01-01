@@ -1,19 +1,11 @@
 {
     "tasks": [
         {
-            "name": "123",
+            "name": "eat",
             "done": false
         },
         {
-            "name": "hello",
-            "done": false
-        },
-        {
-            "name": "12",
-            "done": false
-        },
-        {
-            "name": "32333",
+            "name": "eaet again",
             "done": false
         }
     ]
