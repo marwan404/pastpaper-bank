@@ -52,7 +52,8 @@ app.put("/tasks/{task_name}", response_model=Tasks)
 def update_task(task: Task):
     with open("tasks.json", "r") as json_file:
         data = json.load(json_file)
-    return data
+
+    data["tasks"][task.name] = data["tasks"][task.name]
 
 
 if __name__ == "__main__":
