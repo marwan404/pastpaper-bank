@@ -1,9 +1,16 @@
 import api from "../api.js";
+import { useState } from "react";
 
-function CompleteTask({ id, done }) {
+export default function CompleteTask({ id, done: initialDone, onToggle }) {
+  const [done, setDone] = useState(initialDone);
+
   const handleClick = async () => {
     try {
-      await api.put(`/tasks/${id}/toggle`);
+      const res = await api.put(`/tasks/${id}/toggle`);
+      const newState = res.data.done;
+
+      setDone(newState);            // update button text immediately
+      if (onToggle) onToggle(id, newState); // update parent state
     } catch (err) {
       console.error("Failed to toggle task", err);
     }
@@ -15,5 +22,3 @@ function CompleteTask({ id, done }) {
     </button>
   );
 }
-
-export default CompleteTask;

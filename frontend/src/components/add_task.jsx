@@ -4,8 +4,7 @@ import api from "../api.js";
 function AddTask({onTaskAdded}){
     const[name, setName] = useState("");
 
-    const handleSubmit = async (e) =>{
-        e.preventDefault();
+    const handleSubmit = async () =>{
         if(!name) return;
 
         try {
