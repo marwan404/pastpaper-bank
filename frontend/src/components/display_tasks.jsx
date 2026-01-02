@@ -1,37 +1,39 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import CompleteTask from "./complete_task.jsx";
 import api from "../api.js";
 
 function DisplayTasks() {
   const [tasks, setTasks] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await api.get("/tasks");
-        setTasks(response.data.tasks);
-      } catch (err) {
-        console.error("Failed to load tasks", err);
-      }
-    };
-
-    fetchData();
+  const fetchTasks = useCallback(async () => {
+    try {
+      const res = await api.get("/tasks");
+      setTasks(res.data.tasks);
+    } catch (err) {
+      console.error("Failed to fetch tasks", err);
+    }
   }, []);
 
-  const handleTaskCompleted = (taskName) => {
-    setTasks(prev =>
-      prev.filter(task => task.name !== taskName)
-    );
-  };
+  useEffect(() => {
+    fetchTasks(); // initial load
+
+    const ws = new WebSocket("ws://localhost:8000/ws");
+
+    ws.onmessage = () => {
+      fetchTasks(); // re-fetch on updates
+    };
+
+    return () => ws.close();
+  }, [fetchTasks]);
 
   return (
     <ul>
       {tasks.map(task => (
-        <li key={task.name}>
+        <li key={task.id}>
           {task.name}
           <CompleteTask
-            name={task.name}
-            onTaskCompleted={handleTaskCompleted}
+            id={task.id}
+            done={task.done}
           />
         </li>
       ))}

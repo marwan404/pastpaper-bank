@@ -1,18 +1,17 @@
 import api from "../api.js";
 
-function CompleteTask({ name, onTaskCompleted }) {
+function CompleteTask({ id, done }) {
   const handleClick = async () => {
     try {
-      await api.put(`/tasks/${name}`, { name, done: true });
-      onTaskCompleted(name);
+      await api.put(`/tasks/${id}/toggle`);
     } catch (err) {
-      console.error("Failed to complete task", err);
+      console.error("Failed to toggle task", err);
     }
   };
 
   return (
     <button onClick={handleClick}>
-      complete
+      {done ? "uncheck" : "check"}
     </button>
   );
 }
