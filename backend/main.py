@@ -80,7 +80,7 @@ async def broadcast(message: str):
     for ws in connections.copy():
         try:
             await ws.send_text(message)
-        except WebSocketDisconnect:
+        except (WebSocketDisconnect, RuntimeError, ConnectionResetError):
             connections.remove(ws)
 
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import CompleteTask from "./complete_task.jsx";
+import RenameTask from "./rename_task.jsx";
 import api from "../api.js";
 
 export default function DisplayTasks() {
@@ -40,6 +41,14 @@ export default function DisplayTasks() {
     );
   };
 
+  const renameTaskLocally = (id, newName) => {
+    setTasks(prev =>
+      prev.map(task =>
+        task.id === id ? { ...task, name: newName } : task
+      )
+    );
+  };
+
   return (
     <ul>
       {tasks.map(task => (
@@ -49,6 +58,11 @@ export default function DisplayTasks() {
             id={task.id}
             done={task.done}
             onToggle={updateTaskLocally}
+          />
+          <RenameTask
+            id = {task.id}
+            initialName={task.name}
+            onNameChanged={renameTaskLocally}
           />
         </li>
       ))}
