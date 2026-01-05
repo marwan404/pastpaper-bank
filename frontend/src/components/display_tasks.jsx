@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import CompleteTask from "./complete_task.jsx";
 import RenameTask from "./rename_task.jsx";
+import DeleteTask from "./delete_task.jsx";
 import api from "../api.js";
 
 export default function DisplayTasks() {
@@ -49,6 +50,10 @@ export default function DisplayTasks() {
     );
   };
 
+  const deleteTaskLocally = (id) => {
+    setTasks(prev => prev.filter(task => task.id !== id));
+  };
+
   return (
     <ul>
       {tasks.map(task => (
@@ -63,6 +68,10 @@ export default function DisplayTasks() {
             id = {task.id}
             initialName={task.name}
             onNameChanged={renameTaskLocally}
+          />
+          <DeleteTask
+            id = {task.id}
+            onDelete={deleteTaskLocally}
           />
         </li>
       ))}

@@ -2,32 +2,12 @@
     "tasks": [
         {
             "id": 1,
-            "name": "hello",
+            "name": "get tasks",
             "done": false
         },
         {
             "id": 2,
-            "name": "asd",
-            "done": false
-        },
-        {
-            "id": 3,
-            "name": "12331",
-            "done": false
-        },
-        {
-            "id": 4,
-            "name": "is their 1",
-            "done": false
-        },
-        {
-            "id": 5,
-            "name": "fd",
-            "done": false
-        },
-        {
-            "id": 6,
-            "name": "32213",
+            "name": "asdfasfd",
             "done": false
         }
     ]
