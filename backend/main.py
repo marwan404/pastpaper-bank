@@ -4,8 +4,12 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Quer
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
+import asyncio
+from asyncio import Lock
+
 
 app = FastAPI()
+file_lock = Lock()
 
 # ------------------------
 # CORS CONFIG
@@ -15,7 +19,7 @@ origins = ["http://localhost:5173"]
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["*"],  # allow all for dev
+    allow_origins=[origins],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -72,73 +76,103 @@ def write_tasks(data: dict) -> None:
         json.dump(data, f, indent=4)
 
 
-async def broadcast(message: str) -> None:
-    """Send message to all connected WebSockets, remove dead ones."""
-    dead_connections = []
-    for ws in connections:
+async def broadcast(message: str):
+    for ws in connections.copy():
         try:
             await ws.send_text(message)
         except WebSocketDisconnect:
-            dead_connections.append(ws)
-    for ws in dead_connections:
-        connections.remove(ws)
+            connections.remove(ws)
 
 
 # ------------------------
 # ROUTES
 # ------------------------
 @app.get("/tasks", response_model=Tasks)
-def get_tasks():
-    data = read_tasks()
+async def get_tasks():
+    async with file_lock:
+        data = read_tasks()
     return data
 
 
 @app.post("/tasks", response_model=Task)
 async def add_task(task: TaskCreate):
-    data = read_tasks()
-    new_task = {
-        "id": get_next_id(data["tasks"]),
-        "name": task.name,
-        "done": False,
-    }
-    data["tasks"].append(new_task)
-    write_tasks(data)
+    async with file_lock:
+        data = read_tasks()
+        new_task = {
+            "id": get_next_id(data["tasks"]),
+            "name": task.name,
+            "done": False,
+        }
+        data["tasks"].append(new_task)
+        write_tasks(data)
 
-    # notify all WebSocket clients
-    await broadcast("task_updated")
-
+    await broadcast(json.dumps({
+        "event": "task_added",
+        "task_id": new_task["id"]
+    }))
     return new_task
 
 
 @app.put("/tasks/{task_id}/toggle")
 async def toggle_task(task_id: int):
-    data = read_tasks()
-    for task in data["tasks"]:
-        if task["id"] == task_id:
-            task["done"] = not task["done"]
-            new_state = task["done"]
-            break
-    else:
-        raise HTTPException(status_code=404, detail="Task not found")
+    async with file_lock:
+        data = read_tasks()
+        for task in data["tasks"]:
+            if task["id"] == task_id:
+                task["done"] = not task["done"]
+                new_state = task["done"]
+                break
+        else:
+            raise HTTPException(status_code=404, detail="Task not found")
 
-    write_tasks(data)
-    await broadcast("task_updated")
+        write_tasks(data)
+    await broadcast(json.dumps({
+        "event": "task_updated",
+        "task_id": task_id
+    }))
+
     return {"done": new_state}
 
 
 @app.put("/tasks/{task_id}/change")
 async def change_task_name(task_id: int, task_name: str = Query(...)):
-    data = read_tasks()
-    for task in data["tasks"]:
-        if task["id"] == task_id:
-            task["name"] = task_name
-            break
-    else:
-        raise HTTPException(status_code=404, detail="Task not found")
+    async with file_lock:
+        data = read_tasks()
+        for task in data["tasks"]:
+            if task["id"] == task_id:
+                task["name"] = task_name
+                break
+        else:
+            raise HTTPException(status_code=404, detail="Task not found")
 
-    write_tasks(data)
-    await broadcast("task_updated")
+        write_tasks(data)
+    await broadcast(json.dumps({
+        "event": "task_updated",
+        "task_id": task_id
+    }))
     return {"message": "Task updated"}
+
+
+@app.delete("/tasks/{task_id}")
+async def delete_task(task_id: int):
+    async with file_lock:
+        data = read_tasks()
+        tasks = data["tasks"]
+
+        for i, task in enumerate(tasks):
+            if task["id"] == task_id:
+                tasks.pop(i)
+                break
+        else:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        write_tasks(data)
+    await broadcast(json.dumps({
+        "event": "task_deleted",
+        "task_id": task_id
+    }))
+    return {"message": "Task deleted"}
+
 
 
 # ------------------------
@@ -150,7 +184,7 @@ async def websocket_endpoint(ws: WebSocket):
     connections.append(ws)
     try:
         while True:
-            await ws.receive_text()  # keep the socket alive
+            await asyncio.sleep(3600)
     except WebSocketDisconnect:
         connections.remove(ws)
 
